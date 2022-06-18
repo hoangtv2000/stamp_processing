@@ -2,8 +2,6 @@
     isort: skip_file
 """
 import sys
-
-from stamp_processing.module.yolov5 import YOLO_DIR
 from pkg_resources import DistributionNotFound, get_distribution
 
 __version__ = None
