@@ -11,6 +11,4 @@ except DistributionNotFound:
     __version__ == "0.0.0"  # package is not installed
     pass
 
-sys.path.append(str(YOLO_DIR))
-
 from stamp_processing.remover import StampRemover
