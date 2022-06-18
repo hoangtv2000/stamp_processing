@@ -42,13 +42,12 @@ class StampRemover:
 
         self.padding = 3
 
+
     def __call__(self, image_list: Union[List[npt.NDArray], npt.NDArray], batch_size: int = 16) -> List[npt.NDArray]:
         """Detect and remove stamps from document images
-
         Args:
             image_list (Union[List[npt.NDArray], npt.NDArray]): list of input images
             batch_size (int, optional): Defaults to 16.
-
         Returns:
             List[np.ndarray]: Input images with stamps removed
         """
@@ -60,6 +59,7 @@ class StampRemover:
         else:
             return []
         return self.__batch_removing(image_list, batch_size)  # type:ignore
+
 
     def __batch_removing(self, image_list, batch_size=16):  # type: ignore
         new_pages = []
@@ -75,15 +75,13 @@ class StampRemover:
         sorted_result = sorted(z, key=lambda x: x[1])
         detection_predictions, _ = zip(*sorted_result)
 
-
         for idx, page_boxes in enumerate(detection_predictions):
             page_img = image_list[idx]
             h, w, c = page_img.shape
-            page_img = cv2.cvtColor(page_img, cv2.COLOR_BGR2RGB)
 
             for box in page_boxes:
                 x, y, w_, h_ = box[:4]
-                x_min, y_min, x_max, y_max = x, y, x + w_, y + h_
+                x_min, y_min, x_max, y_max = x, y, (x + w_), (y + h_)
                 
                 stamp_area = page_img[
                     max(y_min - self.padding, 0) : min(y_max + self.padding, h),
@@ -101,21 +99,41 @@ class StampRemover:
         return new_pages
 
 
-def qualify_bounding_boxes(bboxes):
-    result_bboxes = list()
-    for bbox in bboxes:
-        if (bbox[0]* bbox[1] < 250):
-            continue
-        result_bboxes.append(bbox)
-    return result_bboxes
+
+def apply_brightness_contrast(input_img, brightness = 255, contrast = 125):
+    def map(x, in_min, in_max, out_min, out_max):
+        return int((x-in_min) * (out_max-out_min) / (in_max-in_min) + out_min)
+
+    brightness = map(brightness, 0, 510, -255, 255)
+    contrast = map(contrast, 0, 254, -127, 127)
+    if brightness != 0:
+        if brightness > 0:
+            shadow = brightness
+            highlight = 255
+        else:
+            shadow = 0
+            highlight = 255 + brightness
+        alpha_b = (highlight - shadow)/255
+        gamma_b = shadow
+        buf = cv2.addWeighted(input_img, alpha_b, input_img, 0, gamma_b)
+    else:
+        buf = input_img.copy()
+    if contrast != 0:
+        f = float(131 * (contrast + 127)) / (127 * (131 - contrast))
+        alpha_c = f
+        gamma_c = 127*(1-f)
+        buf = cv2.addWeighted(buf, alpha_c, buf, 0, gamma_c)
+    return buf
+
 
 
 
 def remove_redstamp(img):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     copied_image = img.copy()
 
-    # img = apply_brightness_contrast(img, brightness = 255, contrast = 145)
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    img = apply_brightness_contrast(img, brightness = 255, contrast = 145)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
 
     lower_red_mask_1 = np.array([0,25,0], np.uint8)
     upper_red_mask_1 = np.array([10,255,255], np.uint8)
@@ -145,7 +163,9 @@ def remove_redstamp(img):
 
         if (w*h >= 300):
             result_bboxes.append([x, y, w, h])
-
+            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+            
+    imshow(img)
     return result_bboxes
 
 
@@ -154,3 +174,10 @@ def remove_redstamp_batch(batch_image):
     for image in batch_image:
         batch_list.append(remove_redstamp(image))
     return batch_list
+
+
+def imshow(img, figsize=(25, 25), **kwargs):
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+    ax.axis('off')
+    ax.imshow(img, **kwargs)
