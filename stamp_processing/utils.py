@@ -8,7 +8,6 @@ import torch
 from torch import device as torch_device
 from torch.nn import Module
 
-
 logging.basicConfig(format="%(levelname)s - %(message)s'")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -36,7 +35,6 @@ def download_weight(file_id: str, output: Union[str, None] = None, quiet: bool =
             "Check your internet connection or manually download the weight "
             f"at https://drive.google.com/file/d/{file_id}/view?usp=sharing"
         )
-
 
 def check_image_shape(image: npt.NDArray) -> None:
     """Check if input image is valid"""
