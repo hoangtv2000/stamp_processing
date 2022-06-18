@@ -136,12 +136,12 @@ def remove_redstamp(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
 
     lower_red_mask_1 = np.array([0,25,0], np.uint8)
-    upper_red_mask_1 = np.array([10,255,255], np.uint8)
+    upper_red_mask_1 = np.array([20,255,255], np.uint8)
     mask1 = cv2.inRange(img_hsv, lower_red_mask_1, upper_red_mask_1)
 
     output_mask1 = cv2.bitwise_and(copied_image, copied_image, mask=mask1)
 
-    lower_red_mask_2 = np.array([165,25,0])
+    lower_red_mask_2 = np.array([160,25,0])
     upper_red_mask_2 = np.array([180,255,255])
     mask2 = cv2.inRange(img_hsv, lower_red_mask_2, upper_red_mask_2)
 
@@ -161,11 +161,9 @@ def remove_redstamp(img):
     for cntr in contours:
         x, y, w, h = cv2.boundingRect(cntr)
 
-        if (w*h >= 1000):
+        if (w*h >= 1500):
             result_bboxes.append([x, y, w, h])
-            cv2.rectangle(opening_thresh,(x,y),(x+w,y+h),(0,255,0),2)
             
-    imshow(opening_thresh)
     return result_bboxes
 
 
@@ -181,3 +179,5 @@ def imshow(img, figsize=(25, 25), **kwargs):
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     ax.axis('off')
     ax.imshow(img, **kwargs)
+
+
