@@ -3,11 +3,16 @@ from typing import List
 import numpy as np
 import torch
 from fastai.vision.all import *
-
+from torch import device as torch_device
 
 # from backend.StampRemoval.util import *
 __all__ = ["CustomUnetBlock", "CustomDynamicUnet", "UnetInference"]
 
+def select_device(device: str = "") -> torch_device:
+    """Return a torch.device instance"""
+    cpu = device.lower() == "cpu"
+    cuda = not cpu and torch.cuda.is_available()
+    return torch_device("cuda:0" if cuda else "cpu")
 
 class CustomUnetBlock(Module):
     """A quasi-UNet block, using `PixelShuffle_ICNR upsampling`."""
@@ -152,6 +157,7 @@ class UnetInference:
     def __init__(self, model_path):
         """Inference interface for unet model"""
         self.learn = load_learner(model_path)
+        self.learn.model.to(select_device("cuda"))
         self.learn.model.eval()
 
     def __call__(self, image_array: str, bs: int = 1) -> List[np.ndarray]:
@@ -180,7 +186,7 @@ class UnetInference:
         out = []
         i2f = IntToFloatTensor()
         for pred in preds:
-            img_np = i2f.decodes(pred.squeeze()).numpy()
+            img_np = i2f.decodes(pred.squeeze()).cpu().numpy()
             img_np = img_np.transpose(1, 2, 0)
             img_np = img_np.astype(np.uint8)
             out.append(img_np)
@@ -198,12 +204,13 @@ class UnetInference:
         batches = []
         batch = []
         k = 0
+
         for i, im in enumerate(image_array):
             batch.append(item_pipe(type_pipe(im)))
             k += 1
             if i == len(image_array) - 1 or k == bs:
-                # batches.append(torch.cat([norm(i2f(b.cuda())) for b in batch]))
-                batches.append(torch.stack([i2f(b.cpu()) for b in batch], axis=0))
+                batches.append(torch.stack([i2f(b.to(select_device("cuda"))) for b in batch], axis=0))
                 batch = []
                 k = 0
+
         return batches

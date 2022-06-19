@@ -3,7 +3,6 @@
 """
 import sys
 
-from stamp_processing.module.yolov5 import YOLO_DIR
 from pkg_resources import DistributionNotFound, get_distribution
 
 __version__ = None
@@ -12,7 +11,5 @@ try:
 except DistributionNotFound:
     __version__ == "0.0.0"  # package is not installed
     pass
-
-sys.path.append(str(YOLO_DIR))
 
 from stamp_processing.remover import StampRemover
