@@ -49,6 +49,7 @@ class CustomUnetBlock(Module):
         self.relu = act_cls()
         apply_init(nn.Sequential(self.conv1, self.conv2), init)
 
+
     def forward(self, up_in):
         s = self.hook.stored
         up_out = self.shuf(up_in)
@@ -153,7 +154,7 @@ class PerceptualLoss:
     pass
 
 
-class UnetInference:
+class UnetInference():
     def __init__(self, model_path):
         """Inference interface for unet model"""
         self.learn = load_learner(model_path)
@@ -177,6 +178,7 @@ class UnetInference:
         outs = []
         with torch.no_grad():
             for b in batches:
+                print(b.shape)
                 outs.append(self.learn.model(b))
                 del b
         pil_images = self.__decode_prediction(outs)
@@ -212,5 +214,5 @@ class UnetInference:
                 batches.append(torch.stack([i2f(b.to(select_device("cuda"))) for b in batch], axis=0))
                 batch = []
                 k = 0
-
+                
         return batches

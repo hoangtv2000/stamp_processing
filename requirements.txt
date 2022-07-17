@@ -1,10 +1,8 @@
 gdown
 Pillow==8.2.0
 opencv-python
-torch==1.8.1
-torchvision==0.9.1
 fastai==2.3.1
 numpy==1.21.1
 PyYAML==5.4.1
-torch==1.8.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
-torchvision==0.9.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+# torch==1.8.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
+# torchvision==0.9.1+cu101 -f https://download.pytorch.org/whl/torch_stable.html
